@@ -1,0 +1,14 @@
+groups:
+  - DEVELOPERS:
+      - tgros
+      - pbeke
+  - DUMMY_USERS:
+      - koarl
+  - GREENLIGHT_TEST_USERS:
+roles:
+  - ROLE_SCOPE_GREENLIGHT:
+      - GREENLIGHT_TEST_USERS
+  - ROLE_SCOPE_FORMALIZE:
+      - DEVELOPERS
+  - ROLE_SCOPE_DISPATCH:
+      - DEVELOPERS
