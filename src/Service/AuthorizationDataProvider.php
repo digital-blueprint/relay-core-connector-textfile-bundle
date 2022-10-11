@@ -7,61 +7,67 @@ namespace Dbp\Relay\CoreConnectorTextfileBundle\Service;
 use Dbp\Relay\CoreBundle\Authorization\AuthorizationDataProviderInterface;
 use Dbp\Relay\CoreBundle\Helpers\Tools;
 use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
-use Symfony\Component\Yaml\Yaml;
 
 class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 {
-    private const GROUPS_CONFIG_ATTRIBUTE = 'groups';
-    private const ROLES_CONFIG_ATTRIBUTE = 'roles';
+    /** @var array[] */
+    private $groups;
 
-    /** @var string[] */
-    private $availableRoles;
-
-    /** @var string[] */
-    private $availableAttributes;
+    /** @var array[] */
+    private $roles;
 
     public function __construct()
     {
-        $this->availableRoles = [];
-        $this->availableAttributes = [];
+        $this->groups = [];
+        $this->roles = [];
     }
 
     public function setConfig(array $config)
     {
+        foreach ($config[Configuration::GROUPS_ATTRIBUTE] as $group) {
+            $members = [];
+            foreach ($group[Configuration::GROUP_MEMBERS_ATTRIBUTE] as $groupMember) {
+                $members[] = $groupMember[Configuration::NAME_ATTRIBUTE];
+            }
+            if (!empty($members)) {
+                $this->groups[$group[Configuration::NAME_ATTRIBUTE]] = $members;
+            }
+        }
+
         foreach ($config[Configuration::ROLES_ATTRIBUTE] as $role) {
-            $this->availableRoles[] = $role[Configuration::NAME_ATTRIBUTE];
+            $groups = [];
+            foreach ($role[Configuration::GROUPS_ATTRIBUTE] as $roleGroups) {
+                $groups[] = $roleGroups[Configuration::NAME_ATTRIBUTE];
+            }
+            if (!empty($groups)) {
+                $this->roles[$role[Configuration::NAME_ATTRIBUTE]] = $groups;
+            }
         }
     }
 
     public function getAvailableRoles(): array
     {
-        return $this->availableRoles;
+        return array_keys($this->roles);
     }
 
     public function getAvailableAttributes(): array
     {
-        return $this->availableAttributes;
+        return [];
     }
 
     public function getUserData(string $userId, array &$userRoles, array &$userAttributes): void
     {
         if (Tools::isNullOrEmpty($userId) === false) {
-            $rolesConfig = Yaml::parseFile(__DIR__.'/../Resources/config/roles.yaml');
-            $groups = $rolesConfig[self::GROUPS_CONFIG_ATTRIBUTE];
-            $roles = $rolesConfig[self::ROLES_CONFIG_ATTRIBUTE];
-
             $groupsOfUser = [];
-            foreach ($groups as $group) {
-                foreach ($group as $groupName => $groupMembers) {
-                    if ($groupMembers !== null && in_array($userId, $groupMembers, true)) {
-                        $groupsOfUser[] = $groupName;
-                    }
+            foreach ($this->groups as $groupName => $groupMembers) {
+                if (in_array($userId, $groupMembers, true)) {
+                    $groupsOfUser[] = $groupName;
                 }
             }
 
-            foreach ($roles as $role) {
-                foreach ($role as $roleName => $roleGroups) {
-                    if ($roleGroups !== null && count(array_intersect($roleGroups, $groupsOfUser)) > 0) {
+            if (!empty($groupsOfUser)) {
+                foreach ($this->roles as $roleName => $roleGroups) {
+                    if (!empty(array_intersect($roleGroups, $groupsOfUser))) {
                         $userRoles[] = $roleName;
                     }
                 }
