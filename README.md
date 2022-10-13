@@ -40,7 +40,7 @@ dbp_relay_core_connector_textfile:
   # used to define groups used for the attribute mapping
   groups: 
     - name: DEVELOPERS
-      members:
+      users:
         - junior
         - senior
 

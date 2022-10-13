@@ -30,7 +30,7 @@ class Configuration implements ConfigurationInterface
                     ->arrayPrototype()
                         ->children()
                             ->scalarNode(self::NAME_ATTRIBUTE)->end()
-                            ->arrayNode(self::GROUP_MEMBERS_ATTRIBUTE)
+                            ->arrayNode(self::USERS_ATTRIBUTE)
                                 ->scalarPrototype()->end()
                             ->end()
                         ->end()

@@ -66,7 +66,7 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
     private function loadConfig(array $config)
     {
         foreach ($config[Configuration::GROUPS_ATTRIBUTE] as $group) {
-            $members = $group[Configuration::GROUP_MEMBERS_ATTRIBUTE] ?? [];
+            $members = $group[Configuration::USERS_ATTRIBUTE] ?? [];
             if (!empty($members)) {
                 $this->groups[$group[Configuration::NAME_ATTRIBUTE]] = [
                     self::GROUP_MEMBERS => $members,
