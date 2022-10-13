@@ -10,10 +10,16 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 class Configuration implements ConfigurationInterface
 {
     public const NAME_ATTRIBUTE = 'name';
-
     public const GROUPS_ATTRIBUTE = 'groups';
     public const GROUP_MEMBERS_ATTRIBUTE = 'members';
-    public const ROLES_ATTRIBUTE = 'roles';
+    public const ATTRIBUTES_ATTRIBUTE = 'attributes';
+    public const IS_ARRAY_ATTRIBUTE = 'array';
+    public const DEFAULT_VALUE_ATTRIBUTE = 'default_value';
+    public const DEFAULT_VALUES_ATTRIBUTE = 'default_values';
+    public const ATTRIBUTE_MAPPING_ATTRIBUTE = 'attribute_mapping';
+    public const USERS_ATTRIBUTE = 'users';
+    public const VALUE_ATTRIBUTE = 'value';
+    public const VALUES_ATTRIBUTE = 'values';
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -23,31 +29,40 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode(self::GROUPS_ATTRIBUTE)
                     ->arrayPrototype()
                         ->children()
-                            ->scalarNode(self::NAME_ATTRIBUTE)
-                            ->end()
+                            ->scalarNode(self::NAME_ATTRIBUTE)->end()
                             ->arrayNode(self::GROUP_MEMBERS_ATTRIBUTE)
-                                ->arrayPrototype()
-                                    ->children()
-                                        ->scalarNode(self::NAME_ATTRIBUTE)
-                                        ->end()
-                                    ->end()
-                                ->end()
+                                ->scalarPrototype()->end()
                             ->end()
                         ->end()
                     ->end()
                 ->end()
-                ->arrayNode(self::ROLES_ATTRIBUTE)
+                ->arrayNode(self::ATTRIBUTES_ATTRIBUTE)
                     ->arrayPrototype()
                         ->children()
-                            ->scalarNode(self::NAME_ATTRIBUTE)
+                            ->scalarNode(self::NAME_ATTRIBUTE)->end()
+                            ->booleanNode(self::IS_ARRAY_ATTRIBUTE)
+                                ->defaultFalse()
                             ->end()
+                            ->scalarNode(self::DEFAULT_VALUE_ATTRIBUTE)->end()
+                            ->arrayNode(self::DEFAULT_VALUES_ATTRIBUTE)
+                                ->scalarPrototype()->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+                ->arrayNode(self::ATTRIBUTE_MAPPING_ATTRIBUTE)
+                    ->arrayPrototype()
+                        ->children()
+                            ->scalarNode(self::NAME_ATTRIBUTE)->end()
                             ->arrayNode(self::GROUPS_ATTRIBUTE)
-                                ->arrayPrototype()
-                                    ->children()
-                                        ->scalarNode(self::NAME_ATTRIBUTE)
-                                        ->end()
-                                    ->end()
-                                ->end()
+                                ->scalarPrototype()->end()
+                            ->end()
+                            ->arrayNode(self::USERS_ATTRIBUTE)
+                                ->scalarPrototype()->end()
+                            ->end()
+                            ->scalarNode(self::VALUE_ATTRIBUTE)->end()
+                            ->arrayNode(self::VALUES_ATTRIBUTE)
+                                ->scalarPrototype()->end()
                             ->end()
                         ->end()
                     ->end()

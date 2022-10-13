@@ -10,68 +10,153 @@ use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
 class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 {
-    /** @var array[] */
+    private const GROUP_MEMBERS = 'members';
+    private const GROUP_ATTRIBUTES = 'attributes';
+    private const DEFAULT_VALUE = 'default_value';
+    private const IS_ARRAY = 'is_array';
+
+    /** @var array */
     private $groups;
 
-    /** @var array[] */
-    private $roles;
+    /** @var array */
+    private $attributes;
 
     public function __construct()
     {
         $this->groups = [];
-        $this->roles = [];
+        $this->attributes = [];
     }
 
     public function setConfig(array $config)
     {
-        foreach ($config[Configuration::GROUPS_ATTRIBUTE] as $group) {
-            $members = [];
-            foreach ($group[Configuration::GROUP_MEMBERS_ATTRIBUTE] as $groupMember) {
-                $members[] = $groupMember[Configuration::NAME_ATTRIBUTE];
-            }
-            if (!empty($members)) {
-                $this->groups[$group[Configuration::NAME_ATTRIBUTE]] = $members;
-            }
-        }
-
-        foreach ($config[Configuration::ROLES_ATTRIBUTE] as $role) {
-            $groups = [];
-            foreach ($role[Configuration::GROUPS_ATTRIBUTE] as $roleGroups) {
-                $groups[] = $roleGroups[Configuration::NAME_ATTRIBUTE];
-            }
-            if (!empty($groups)) {
-                $this->roles[$role[Configuration::NAME_ATTRIBUTE]] = $groups;
-            }
-        }
+        $this->loadConfig($config);
     }
 
     public function getAvailableRoles(): array
     {
-        return array_keys($this->roles);
+        return [];
     }
 
     public function getAvailableAttributes(): array
     {
-        return [];
+        return array_keys($this->attributes);
     }
 
     public function getUserData(string $userId, array &$userRoles, array &$userAttributes): void
     {
         if (Tools::isNullOrEmpty($userId) === false) {
-            $groupsOfUser = [];
-            foreach ($this->groups as $groupName => $groupMembers) {
-                if (in_array($userId, $groupMembers, true)) {
-                    $groupsOfUser[] = $groupName;
-                }
-            }
-
-            if (!empty($groupsOfUser)) {
-                foreach ($this->roles as $roleName => $roleGroups) {
-                    if (!empty(array_intersect($roleGroups, $groupsOfUser))) {
-                        $userRoles[] = $roleName;
+            foreach ($this->groups as $group) {
+                if (in_array($userId, $group[self::GROUP_MEMBERS], true)) {
+                    foreach ($group[self::GROUP_ATTRIBUTES] as $attributeName => $attributeValue) {
+                        if (isset($userAttributes[$attributeName]) && $userAttributes[$attributeName] !== $attributeValue) {
+                            throw new \RuntimeException(sprintf('conflicting values for attribute \'%s\'', $attributeName));
+                        }
+                        $userAttributes[$attributeName] = $attributeValue;
                     }
                 }
             }
+            foreach ($this->attributes as $attributeName => $attributeValue) {
+                if (!isset($userAttributes[$attributeName])) {
+                    $userAttributes[$attributeName] = $attributeValue;
+                }
+            }
+        }
+    }
+
+    private function loadConfig(array $config)
+    {
+        foreach ($config[Configuration::GROUPS_ATTRIBUTE] as $group) {
+            $members = $group[Configuration::GROUP_MEMBERS_ATTRIBUTE] ?? [];
+            if (!empty($members)) {
+                $this->groups[$group[Configuration::NAME_ATTRIBUTE]] = [
+                    self::GROUP_MEMBERS => $members,
+                    self::GROUP_ATTRIBUTES => [],
+                ];
+            }
+        }
+
+        $this->attributes = [];
+        foreach ($config[Configuration::ATTRIBUTES_ATTRIBUTE] as $attribute) {
+            $attributeName = $attribute[Configuration::NAME_ATTRIBUTE];
+            if (isset($this->attributes[$attributeName])) {
+                throw new \RuntimeException(sprintf('multiple declaration of attribute \'%s\'', $attributeName));
+            }
+            $isArray = $attribute[Configuration::IS_ARRAY_ATTRIBUTE];
+            if ($isArray) {
+                $defaultValue = $attribute[Configuration::DEFAULT_VALUES_ATTRIBUTE] ?? [];
+            } else {
+                $defaultValue = $attribute[Configuration::DEFAULT_VALUE_ATTRIBUTE] ?? null;
+            }
+            $this->attributes[$attributeName] = [
+                self::DEFAULT_VALUE => $defaultValue,
+                self::IS_ARRAY => $isArray,
+            ];
+        }
+
+        $mappingIndex = 0;
+        foreach ($config[Configuration::ATTRIBUTE_MAPPING_ATTRIBUTE] as $attributeMapping) {
+            $attributeName = $attributeMapping[Configuration::NAME_ATTRIBUTE];
+            $groupNames = $attributeMapping[Configuration::GROUPS_ATTRIBUTE] ?? [];
+            $users = $attributeMapping[Configuration::USERS_ATTRIBUTE] ?? [];
+            if (!empty($users)) {
+                // add a new dummy group for each user list
+                $groupName = $attributeName.$mappingIndex;
+                $this->groups[$groupName] = [
+                    self::GROUP_MEMBERS => $users,
+                    self::GROUP_ATTRIBUTES => [],
+                ];
+                $groupNames[] = $groupName;
+            }
+
+            $attribute = $this->attributes[$attributeName] ?? null;
+            if ($attribute === null) {
+                throw new \RuntimeException(sprintf('attribute \'%s\' not declared in \'%s\' config section', $attributeName, Configuration::ATTRIBUTES_ATTRIBUTE));
+            }
+
+            if ($attribute[self::IS_ARRAY]) {
+                if (isset($attributeMapping[Configuration::VALUE_ATTRIBUTE])) {
+                    throw new \RuntimeException(sprintf('scalar value given for array attribute \'%s\'', $attributeName));
+                }
+                $value = $attributeMapping[Configuration::VALUES_ATTRIBUTE];
+            } else {
+                // NOTE: symfony automatically provides a default value for prototype array elements, i.e. we have to check, whether the array is non-empty
+                if (!empty($attributeMapping[Configuration::VALUES_ATTRIBUTE] ?? [])) {
+                    throw new \RuntimeException(sprintf('array value given for scalar attribute \'%s\'', $attributeName));
+                } elseif (!isset($attributeMapping[Configuration::VALUE_ATTRIBUTE])) {
+                    throw new \RuntimeException(sprintf('no value given for scalar attribute \'%s\'', $attributeName));
+                }
+                $value = $attributeMapping[Configuration::VALUE_ATTRIBUTE];
+                $this->attributes[$attributeName][self::DEFAULT_VALUE] = $attribute[self::DEFAULT_VALUE] ?? self::inferDefaultValue($value);
+            }
+
+            foreach ($groupNames as $groupName) {
+                $this->groups[$groupName][self::GROUP_ATTRIBUTES][$attributeName] = $value;
+            }
+
+            ++$mappingIndex;
+        }
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return array|false|float|int|string
+     */
+    private static function inferDefaultValue($value)
+    {
+        switch (gettype($value)) {
+            case 'boolean':
+                return false;
+            case 'integer':
+                return 0;
+            case 'double':
+                return 0.0;
+            case 'string':
+                return '';
+            case 'array':
+                return [];
+            default:
+                throw new \RuntimeException(sprintf('invalid value type \'%s\'', gettype($value)));
         }
     }
 }
