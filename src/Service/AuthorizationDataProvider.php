@@ -32,21 +32,18 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
         $this->loadConfig($config);
     }
 
-    public function getAvailableRoles(): array
-    {
-        return [];
-    }
-
     public function getAvailableAttributes(): array
     {
         return array_keys($this->attributes);
     }
 
-    public function getUserData(string $userId, array &$userRoles, array &$userAttributes): void
+    public function getUserAttributes(string $userIdentifier): array
     {
-        if (Tools::isNullOrEmpty($userId) === false) {
+        $userAttributes = [];
+
+        if (Tools::isNullOrEmpty($userIdentifier) === false) {
             foreach ($this->groups as $group) {
-                if (in_array($userId, $group[self::GROUP_MEMBERS], true)) {
+                if (in_array($userIdentifier, $group[self::GROUP_MEMBERS], true)) {
                     foreach ($group[self::GROUP_ATTRIBUTES] as $attributeName => $attributeValue) {
                         if (isset($userAttributes[$attributeName]) && $userAttributes[$attributeName] !== $attributeValue) {
                             throw new \RuntimeException(sprintf('conflicting values for attribute \'%s\'', $attributeName));
@@ -55,12 +52,15 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
                     }
                 }
             }
+            // set default values for attributes without values
             foreach ($this->attributes as $attributeName => $attributeValue) {
                 if (!isset($userAttributes[$attributeName])) {
                     $userAttributes[$attributeName] = $attributeValue;
                 }
             }
         }
+
+        return $userAttributes;
     }
 
     private function loadConfig(array $config)
