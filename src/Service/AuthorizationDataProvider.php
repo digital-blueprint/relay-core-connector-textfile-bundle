@@ -10,15 +10,25 @@ use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
 class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 {
-    private const GROUP_MEMBERS = 'members';
-    private const GROUP_ATTRIBUTES = 'attributes';
-    private const DEFAULT_VALUE = 'default_value';
-    private const IS_ARRAY = 'is_array';
+    private const GROUP_MEMBERS_ATTRIBUTE = 'members';
+    private const GROUP_ATTRIBUTES_ATTRIBUTE = 'attributes';
+    private const DEFAULT_VALUE_ATTRIBUTE = 'default_value';
+    private const IS_ARRAY_ATTRIBUTE = 'is_array';
 
-    /** @var array */
+    /**
+     * Array of available user groups:
+     * ['group1' => [self::GROUP_MEMBERS_ATTRIBUTE => ['user1'], self::GROUP_ATTRIBUTES_ATTRIBUTE => ['attr1' => 'value1'], 'group2' => ... ].
+     *
+     * @var array
+     */
     private $groups;
 
-    /** @var array */
+    /**
+     * Array of available attributes:
+     * ['attr1' => [self::DEFAULT_VALUE_ATTRIBUTE => 'value0', self::IS_ARRAY_ATTRIBUTE => 'false'], 'attr2' => ... ].
+     *
+     * @var array
+     */
     private $attributes;
 
     public function __construct()
@@ -43,8 +53,8 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 
         if (Tools::isNullOrEmpty($userIdentifier) === false) {
             foreach ($this->groups as $group) {
-                if (in_array($userIdentifier, $group[self::GROUP_MEMBERS], true)) {
-                    foreach ($group[self::GROUP_ATTRIBUTES] as $attributeName => $attributeValue) {
+                if (in_array($userIdentifier, $group[self::GROUP_MEMBERS_ATTRIBUTE], true)) {
+                    foreach ($group[self::GROUP_ATTRIBUTES_ATTRIBUTE] as $attributeName => $attributeValue) {
                         if (isset($userAttributes[$attributeName]) && $userAttributes[$attributeName] !== $attributeValue) {
                             throw new \RuntimeException(sprintf('conflicting values for attribute \'%s\'', $attributeName));
                         }
@@ -55,7 +65,7 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
             // set default values for attributes without values
             foreach ($this->attributes as $attributeName => $attributeValue) {
                 if (!isset($userAttributes[$attributeName])) {
-                    $userAttributes[$attributeName] = $attributeValue;
+                    $userAttributes[$attributeName] = $attributeValue[self::DEFAULT_VALUE_ATTRIBUTE];
                 }
             }
         }
@@ -69,8 +79,8 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
             $members = $group[Configuration::USERS_ATTRIBUTE] ?? [];
             if (!empty($members)) {
                 $this->groups[$group[Configuration::NAME_ATTRIBUTE]] = [
-                    self::GROUP_MEMBERS => $members,
-                    self::GROUP_ATTRIBUTES => [],
+                    self::GROUP_MEMBERS_ATTRIBUTE => $members,
+                    self::GROUP_ATTRIBUTES_ATTRIBUTE => [],
                 ];
             }
         }
@@ -88,8 +98,8 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
                 $defaultValue = $attribute[Configuration::DEFAULT_VALUE_ATTRIBUTE] ?? null;
             }
             $this->attributes[$attributeName] = [
-                self::DEFAULT_VALUE => $defaultValue,
-                self::IS_ARRAY => $isArray,
+                self::DEFAULT_VALUE_ATTRIBUTE => $defaultValue,
+                self::IS_ARRAY_ATTRIBUTE => $isArray,
             ];
         }
 
@@ -102,8 +112,8 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
                 // add a new dummy group for each user list
                 $groupName = $attributeName.$mappingIndex;
                 $this->groups[$groupName] = [
-                    self::GROUP_MEMBERS => $users,
-                    self::GROUP_ATTRIBUTES => [],
+                    self::GROUP_MEMBERS_ATTRIBUTE => $users,
+                    self::GROUP_ATTRIBUTES_ATTRIBUTE => [],
                 ];
                 $groupNames[] = $groupName;
             }
@@ -113,7 +123,7 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
                 throw new \RuntimeException(sprintf('attribute \'%s\' not declared in \'%s\' config section', $attributeName, Configuration::ATTRIBUTES_ATTRIBUTE));
             }
 
-            if ($attribute[self::IS_ARRAY]) {
+            if ($attribute[self::IS_ARRAY_ATTRIBUTE]) {
                 if (isset($attributeMapping[Configuration::VALUE_ATTRIBUTE])) {
                     throw new \RuntimeException(sprintf('scalar value given for array attribute \'%s\'', $attributeName));
                 }
@@ -126,37 +136,14 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
                     throw new \RuntimeException(sprintf('no value given for scalar attribute \'%s\'', $attributeName));
                 }
                 $value = $attributeMapping[Configuration::VALUE_ATTRIBUTE];
-                $this->attributes[$attributeName][self::DEFAULT_VALUE] = $attribute[self::DEFAULT_VALUE] ?? self::inferDefaultValue($value);
+                $this->attributes[$attributeName][self::DEFAULT_VALUE_ATTRIBUTE] = $attribute[self::DEFAULT_VALUE_ATTRIBUTE] ?? null;
             }
 
             foreach ($groupNames as $groupName) {
-                $this->groups[$groupName][self::GROUP_ATTRIBUTES][$attributeName] = $value;
+                $this->groups[$groupName][self::GROUP_ATTRIBUTES_ATTRIBUTE][$attributeName] = $value;
             }
 
             ++$mappingIndex;
-        }
-    }
-
-    /**
-     * @param mixed $value
-     *
-     * @return array|false|float|int|string
-     */
-    private static function inferDefaultValue($value)
-    {
-        switch (gettype($value)) {
-            case 'boolean':
-                return false;
-            case 'integer':
-                return 0;
-            case 'double':
-                return 0.0;
-            case 'string':
-                return '';
-            case 'array':
-                return [];
-            default:
-                throw new \RuntimeException(sprintf('invalid value type \'%s\'', gettype($value)));
         }
     }
 }
