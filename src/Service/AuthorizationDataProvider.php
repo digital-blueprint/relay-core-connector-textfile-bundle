@@ -107,6 +107,12 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
         foreach ($config[Configuration::ATTRIBUTE_MAPPING_ATTRIBUTE] as $attributeMapping) {
             $attributeName = $attributeMapping[Configuration::NAME_ATTRIBUTE];
             $groupNames = $attributeMapping[Configuration::GROUPS_ATTRIBUTE] ?? [];
+            foreach ($groupNames as $groupName) {
+                if (!isset($this->groups[$groupName])) {
+                    throw new \RuntimeException(sprintf('group \'%s\' not declared in \'%s\' config section', $groupName, Configuration::GROUPS_ATTRIBUTE));
+                }
+            }
+
             $users = $attributeMapping[Configuration::USERS_ATTRIBUTE] ?? [];
             if (!empty($users)) {
                 // add a new dummy group for each user list
