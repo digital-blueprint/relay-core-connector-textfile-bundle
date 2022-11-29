@@ -47,7 +47,7 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
         return array_keys($this->attributes);
     }
 
-    public function getUserAttributes(string $userIdentifier): array
+    public function getUserAttributes(?string $userIdentifier): array
     {
         $userAttributes = [];
 
