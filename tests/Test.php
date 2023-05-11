@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Tests;
 
-use PHPUnit\Framework\TestCase;
+use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
 
-class Test extends TestCase
+class Test extends ApiTestCase
 {
-    public function testExample()
+    public function testBasics()
     {
-        $this->assertTrue(true);
+        $client = static::createClient();
+        $this->assertNotNull($client);
     }
 }
