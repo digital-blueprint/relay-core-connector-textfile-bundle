@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Tests;
 
-use ApiPlatform\Core\Bridge\Symfony\Bundle\ApiPlatformBundle;
+use ApiPlatform\Symfony\Bundle\ApiPlatformBundle;
 use Dbp\Relay\CoreBundle\DbpRelayCoreBundle;
 use Dbp\Relay\CoreConnectorTextfileBundle\DbpRelayCoreConnectorTextfileBundle;
 use Nelmio\CorsBundle\NelmioCorsBundle;
