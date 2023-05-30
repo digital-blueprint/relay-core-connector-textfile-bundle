@@ -1,9 +1,10 @@
 # DbpRelayCoreConnectorTextfileBundle
 
-[GitLab](https://gitlab.tugraz.at/dbp/relay/dbp-relay-core-connector-textfile-bundle) |
-[Packagist](https://packagist.org/packages/dbp/relay-core-connector-textfile-bundle) |
+[GitHub](https://github.com/digital-blueprint/relay-core-connector-textfile-bundle) |
+[Packagist](https://packagist.org/packages/dbp/relay-core-connector-textfile-bundle)
 
-The core_connector_textfile bundle provides an implementation of the `AuthorizationDataProviderInterface` which retrieves user authorization data from a textile (the bundle's config file).
+The core_connector_textfile bundle provides an implementation of the `AuthorizationDataProviderInterface` 
+which retrieves user attributes used for access control from the bundle's config file.
 
 ## Bundle installation
 
@@ -24,7 +25,7 @@ Dbp\Relay\CoreBundle\DbpRelayCoreBundle::class => ['all' => true],
 ];
 ```
 
-If you were using the [DBP API Server Template](https://gitlab.tugraz.at/dbp/relay/dbp-relay-server-template)
+If you were using the [DBP API Server Template](https://github.com/digital-blueprint/relay-server-template)
 as template for your Symfony application, then this should have already been generated for you.
 
 * Run `composer install` to clear caches
@@ -47,12 +48,12 @@ dbp_relay_core_connector_textfile:
   # used to declare available attributes
   attributes: 
     - name: ROLE_DEVELOPER
-      default_value: false # can be omitted: 'false' is the default value for boolean attributes
+      default_value: false # default value: 'null' for scalar and '[]' for array attributes
     - name: ORGANIZATION_UNITS 
-      array: true # 'false' by default
+      array: true # default value: 'false'
 
   # used to define values for the attributes
-  # each mapping entry specifies a value for an attribute for one or many groups or users
+  # each mapping entry specifies a value for an attribute for one or many users and/or groups
   attribute_mapping: 
     - name: ROLE_DEVELOPER
       groups:
@@ -71,14 +72,6 @@ dbp_relay_core_connector_textfile:
         - 3
 
 ```
-
-Default values:
-* `false` for boolean attributes
-* `0` for integer attributes
-* `0.0` for float attributes
-* `''` (empty string) for string attributes
-* `[]` (empty array) for array attributes
-
 
 If you were using the [DBP API Server Template](https://gitlab.tugraz.at/dbp/relay/dbp-relay-server-template)
 as template for your Symfony application, then the configuration file should have already been generated for you.
