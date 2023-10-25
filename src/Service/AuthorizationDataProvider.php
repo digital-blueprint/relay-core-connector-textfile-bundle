@@ -62,11 +62,11 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
                     }
                 }
             }
-            // set default values for attributes without values
-            foreach ($this->attributes as $attributeName => $attributeValue) {
-                if (!isset($userAttributes[$attributeName])) {
-                    $userAttributes[$attributeName] = $attributeValue[self::DEFAULT_VALUE_ATTRIBUTE];
-                }
+        }
+        // set default values for attributes without values
+        foreach ($this->attributes as $attributeName => $attributeValue) {
+            if (!isset($userAttributes[$attributeName])) {
+                $userAttributes[$attributeName] = $attributeValue[self::DEFAULT_VALUE_ATTRIBUTE];
             }
         }
 
