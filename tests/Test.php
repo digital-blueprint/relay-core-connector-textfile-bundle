@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Tests;
 
+use Dbp\Relay\CoreBundle\TestUtils\TestAuthorizationService;
 use Dbp\Relay\CoreConnectorTextfileBundle\Service\AuthorizationDataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -20,6 +21,7 @@ class Test extends TestCase
 
         $this->authorizationDataProvider = new AuthorizationDataProvider();
         $this->authorizationDataProvider->setConfig(self::createAuthorizationConfig());
+        TestAuthorizationService::setUp($this->authorizationDataProvider, 'testuser', ['IS_USER' => false]);
     }
 
     public function testAvailableAttributes(): void
@@ -82,6 +84,18 @@ class Test extends TestCase
         $this->assertEquals([1, 2, 3], $this->authorizationDataProvider->getUserAttributes(null)['VALUES_2']);
     }
 
+    public function testValueExpression(): void
+    {
+        // 'testuser' is not part of the group 'USERS'
+        $this->assertFalse($this->authorizationDataProvider->getUserAttributes('testuser')['ROLE_USER']);
+
+        // however, if we give them the required user attribute
+        TestAuthorizationService::setUp($this->authorizationDataProvider, 'testuser', ['IS_USER' => true]);
+
+        // the value expression will evaluate to 'true'
+        $this->assertTrue($this->authorizationDataProvider->getUserAttributes('testuser')['ROLE_USER']);
+    }
+
     private static function createAuthorizationConfig(): array
     {
         $config = [];
@@ -98,6 +112,7 @@ class Test extends TestCase
             [
                 'name' => 'ROLE_USER',
                 'array' => false,
+                'value_expression' => 'user.get("IS_USER")',
             ],
             [
                 'name' => 'ROLE_ADMIN',

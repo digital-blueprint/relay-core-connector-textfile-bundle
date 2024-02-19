@@ -20,6 +20,7 @@ class Configuration implements ConfigurationInterface
     public const USERS_ATTRIBUTE = 'users';
     public const VALUE_ATTRIBUTE = 'value';
     public const VALUES_ATTRIBUTE = 'values';
+    public const VALUE_EXPRESSION_ATTRIBUTE = 'value_expression';
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -47,6 +48,7 @@ class Configuration implements ConfigurationInterface
                             ->arrayNode(self::DEFAULT_VALUES_ATTRIBUTE)
                                 ->scalarPrototype()->end()
                             ->end()
+                            ->scalarNode(self::VALUE_EXPRESSION_ATTRIBUTE)->end()
                         ->end()
                     ->end()
                 ->end()
@@ -64,6 +66,7 @@ class Configuration implements ConfigurationInterface
                             ->arrayNode(self::VALUES_ATTRIBUTE)
                                 ->scalarPrototype()->end()
                             ->end()
+                            ->scalarNode(self::VALUE_EXPRESSION_ATTRIBUTE)->end()
                         ->end()
                     ->end()
                 ->end()

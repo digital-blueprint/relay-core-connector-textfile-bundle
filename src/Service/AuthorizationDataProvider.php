@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Service;
 
+use Dbp\Relay\CoreBundle\Authorization\AbstractAuthorizationService;
 use Dbp\Relay\CoreBundle\Authorization\AuthorizationDataProviderInterface;
 use Dbp\Relay\CoreBundle\Helpers\Tools;
 use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
-class AuthorizationDataProvider implements AuthorizationDataProviderInterface
+class AuthorizationDataProvider extends AbstractAuthorizationService implements AuthorizationDataProviderInterface
 {
     private const GROUP_MEMBERS_ATTRIBUTE = 'members';
     private const GROUP_ATTRIBUTES_ATTRIBUTE = 'attributes';
     private const DEFAULT_VALUE_ATTRIBUTE = 'default_value';
     private const IS_ARRAY_ATTRIBUTE = 'is_array';
+    private const VALUE_EXPRESSION_ATTRIBUTE = 'value_expression';
 
     /**
      * Array of available user groups:
@@ -33,6 +35,8 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 
     public function __construct()
     {
+        parent::__construct();
+
         $this->groups = [];
         $this->attributes = [];
     }
@@ -49,32 +53,40 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 
     public function getUserAttributes(?string $userIdentifier): array
     {
-        $userAttributes = [];
+        $userAttributeValues = [];
 
         if (Tools::isNullOrEmpty($userIdentifier) === false) {
             foreach ($this->groups as $group) {
                 if (in_array($userIdentifier, $group[self::GROUP_MEMBERS_ATTRIBUTE], true)) {
                     foreach ($group[self::GROUP_ATTRIBUTES_ATTRIBUTE] as $attributeName => $attributeValue) {
-                        if (isset($userAttributes[$attributeName]) && $userAttributes[$attributeName] !== $attributeValue) {
+                        if (isset($userAttributeValues[$attributeName]) && $userAttributeValues[$attributeName] !== $attributeValue) {
                             throw new \RuntimeException(sprintf('conflicting values for attribute \'%s\'', $attributeName));
                         }
-                        $userAttributes[$attributeName] = $attributeValue;
+                        $userAttributeValues[$attributeName] = $attributeValue;
                     }
                 }
             }
         }
-        // set default values for attributes without values
-        foreach ($this->attributes as $attributeName => $attributeValue) {
-            if (!isset($userAttributes[$attributeName])) {
-                $userAttributes[$attributeName] = $attributeValue[self::DEFAULT_VALUE_ATTRIBUTE];
+
+        // set default values / value expression results for attributes without values
+        foreach ($this->attributes as $attributeName => $attributeData) {
+            if (!isset($userAttributeValues[$attributeName])) {
+                $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
+                if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
+                    $userAttributeValues[$attributeName] = $this->getAttribute($attributeName, $defaultValue);
+                } else {
+                    $userAttributeValues[$attributeName] = $defaultValue;
+                }
             }
         }
 
-        return $userAttributes;
+        return $userAttributeValues;
     }
 
     private function loadConfig(array $config)
     {
+        $attributeValueExpressions = [];
+
         foreach ($config[Configuration::GROUPS_ATTRIBUTE] as $group) {
             $members = $group[Configuration::USERS_ATTRIBUTE] ?? [];
             if (!empty($members)) {
@@ -91,6 +103,11 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
             if (isset($this->attributes[$attributeName])) {
                 throw new \RuntimeException(sprintf('multiple declaration of attribute \'%s\'', $attributeName));
             }
+
+            if ($attributeValueExpression = ($attribute[Configuration::VALUE_EXPRESSION_ATTRIBUTE] ?? null)) {
+                $attributeValueExpressions[$attributeName] = $attributeValueExpression;
+            }
+
             $isArray = $attribute[Configuration::IS_ARRAY_ATTRIBUTE];
             if ($isArray) {
                 $defaultValue = $attribute[Configuration::DEFAULT_VALUES_ATTRIBUTE] ?? [];
@@ -100,6 +117,7 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
             $this->attributes[$attributeName] = [
                 self::DEFAULT_VALUE_ATTRIBUTE => $defaultValue,
                 self::IS_ARRAY_ATTRIBUTE => $isArray,
+                self::VALUE_EXPRESSION_ATTRIBUTE => $attributeValueExpression,
             ];
         }
 
@@ -151,5 +169,7 @@ class AuthorizationDataProvider implements AuthorizationDataProviderInterface
 
             ++$mappingIndex;
         }
+
+        parent::configure([], $attributeValueExpressions);
     }
 }
