@@ -1,3 +1,7 @@
+# v0.1.11
+
+* Fix api-platform requirement version syntax
+
 # v0.1.10
 
 * Add support for api-platform 3.2
