@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Service;
 
 use Dbp\Relay\CoreBundle\Authorization\AbstractAuthorizationService;
-use Dbp\Relay\CoreBundle\Authorization\AuthorizationDataProviderInterface;
 use Dbp\Relay\CoreBundle\Helpers\Tools;
+use Dbp\Relay\CoreBundle\User\UserAttributeProviderInterface;
 use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
-class AuthorizationDataProvider extends AbstractAuthorizationService implements AuthorizationDataProviderInterface
+class AuthorizationDataProvider extends AbstractAuthorizationService implements UserAttributeProviderInterface
 {
     private const GROUP_MEMBERS_ATTRIBUTE = 'members';
     private const GROUP_ATTRIBUTES_ATTRIBUTE = 'attributes';
