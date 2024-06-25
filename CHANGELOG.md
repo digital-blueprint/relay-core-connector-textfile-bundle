@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.12
+
+* Port to UserAttributeProviderExInterface to only evaluate expression when needed
+
 ## v0.1.11
 
 * Fix api-platform requirement version syntax
