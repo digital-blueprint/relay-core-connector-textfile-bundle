@@ -47,7 +47,7 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
         return array_keys($this->attributes);
     }
 
-    public function getUserAttributes(?string $userIdentifier): array
+    private function getGroupAttributes(?string $userIdentifier): array
     {
         $userAttributeValues = [];
 
@@ -63,6 +63,13 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
                 }
             }
         }
+
+        return $userAttributeValues;
+    }
+
+    public function getUserAttributes(?string $userIdentifier): array
+    {
+        $userAttributeValues = $this->getGroupAttributes($userIdentifier);
 
         // set default values / value expression results for attributes without values
         foreach ($this->attributes as $attributeName => $attributeData) {
@@ -81,17 +88,27 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
 
     public function getUserAttribute(?string $userIdentifier, string $name): mixed
     {
-        $attributes = $this->getUserAttributes($userIdentifier);
-        if (!array_key_exists($name, $attributes)) {
+        if (!array_key_exists($name, $this->attributes)) {
             throw new UserAttributeException('unknown '.$name, UserAttributeException::USER_ATTRIBUTE_UNDEFINED);
         }
 
-        return $attributes[$name];
+        $userAttributeValues = $this->getGroupAttributes($userIdentifier);
+        if (isset($userAttributeValues[$name])) {
+            return $userAttributeValues[$name];
+        }
+
+        $attributeData = $this->attributes[$name];
+        $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
+        if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
+            return $this->auth->getAttribute($name, $defaultValue);
+        } else {
+            return $defaultValue;
+        }
     }
 
     public function hasUserAttribute(string $name): bool
     {
-        return in_array($name, $this->getAvailableAttributes(), true);
+        return array_key_exists($name, $this->attributes);
     }
 
     public function setConfig(array $config)
