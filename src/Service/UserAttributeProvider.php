@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Service;
 
 use Dbp\Relay\CoreBundle\Helpers\Tools;
-use Dbp\Relay\CoreBundle\User\UserAttributeProviderInterface;
+use Dbp\Relay\CoreBundle\User\UserAttributeException;
+use Dbp\Relay\CoreBundle\User\UserAttributeProviderExInterface;
 use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
-class UserAttributeProvider implements UserAttributeProviderInterface
+class UserAttributeProvider implements UserAttributeProviderExInterface
 {
     private const GROUP_MEMBERS_ATTRIBUTE = 'members';
     private const GROUP_ATTRIBUTES_ATTRIBUTE = 'attributes';
@@ -76,6 +77,21 @@ class UserAttributeProvider implements UserAttributeProviderInterface
         }
 
         return $userAttributeValues;
+    }
+
+    public function getUserAttribute(?string $userIdentifier, string $name): mixed
+    {
+        $attributes = $this->getUserAttributes($userIdentifier);
+        if (!array_key_exists($name, $attributes)) {
+            throw new UserAttributeException('unknown '.$name, UserAttributeException::USER_ATTRIBUTE_UNDEFINED);
+        }
+
+        return $attributes[$name];
+    }
+
+    public function hasUserAttribute(string $name): bool
+    {
+        return in_array($name, $this->getAvailableAttributes(), true);
     }
 
     public function setConfig(array $config)
