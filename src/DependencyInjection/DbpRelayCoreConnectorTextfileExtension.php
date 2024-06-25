@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection;
 
 use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
-use Dbp\Relay\CoreConnectorTextfileBundle\Service\AuthorizationDataProvider;
+use Dbp\Relay\CoreConnectorTextfileBundle\Service\UserAttributeProvider;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -23,7 +23,7 @@ class DbpRelayCoreConnectorTextfileExtension extends ConfigurableExtension
         );
         $loader->load('services.yaml');
 
-        $definition = $container->getDefinition(AuthorizationDataProvider::class);
+        $definition = $container->getDefinition(UserAttributeProvider::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
     }
 }

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Service;
 
-use Dbp\Relay\CoreBundle\Authorization\AbstractAuthorizationService;
 use Dbp\Relay\CoreBundle\Helpers\Tools;
 use Dbp\Relay\CoreBundle\User\UserAttributeProviderInterface;
 use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
-class AuthorizationDataProvider extends AbstractAuthorizationService implements UserAttributeProviderInterface
+class UserAttributeProvider implements UserAttributeProviderInterface
 {
     private const GROUP_MEMBERS_ATTRIBUTE = 'members';
     private const GROUP_ATTRIBUTES_ATTRIBUTE = 'attributes';
@@ -33,17 +32,13 @@ class AuthorizationDataProvider extends AbstractAuthorizationService implements 
      */
     private $attributes;
 
-    public function __construct()
-    {
-        parent::__construct();
+    private AuthorizationService $auth;
 
+    public function __construct(AuthorizationService $auth)
+    {
         $this->groups = [];
         $this->attributes = [];
-    }
-
-    public function setConfig(array $config)
-    {
-        $this->loadConfig($config);
+        $this->auth = $auth;
     }
 
     public function getAvailableAttributes(): array
@@ -73,7 +68,7 @@ class AuthorizationDataProvider extends AbstractAuthorizationService implements 
             if (!isset($userAttributeValues[$attributeName])) {
                 $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
                 if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
-                    $userAttributeValues[$attributeName] = $this->getAttribute($attributeName, $defaultValue);
+                    $userAttributeValues[$attributeName] = $this->auth->getAttribute($attributeName, $defaultValue);
                 } else {
                     $userAttributeValues[$attributeName] = $defaultValue;
                 }
@@ -83,10 +78,11 @@ class AuthorizationDataProvider extends AbstractAuthorizationService implements 
         return $userAttributeValues;
     }
 
-    private function loadConfig(array $config)
+    public function setConfig(array $config)
     {
         $attributeValueExpressions = [];
 
+        $this->groups = [];
         foreach ($config[Configuration::GROUPS_ATTRIBUTE] as $group) {
             $members = $group[Configuration::USERS_ATTRIBUTE] ?? [];
             if (!empty($members)) {
@@ -170,6 +166,6 @@ class AuthorizationDataProvider extends AbstractAuthorizationService implements 
             ++$mappingIndex;
         }
 
-        parent::configure([], $attributeValueExpressions);
+        $this->auth->configure([], $attributeValueExpressions);
     }
 }

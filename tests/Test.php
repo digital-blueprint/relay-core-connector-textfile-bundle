@@ -5,95 +5,95 @@ declare(strict_types=1);
 namespace Dbp\Relay\CoreConnectorTextfileBundle\Tests;
 
 use Dbp\Relay\CoreBundle\TestUtils\TestAuthorizationService;
-use Dbp\Relay\CoreConnectorTextfileBundle\Service\AuthorizationDataProvider;
+use Dbp\Relay\CoreConnectorTextfileBundle\Service\AuthorizationService;
+use Dbp\Relay\CoreConnectorTextfileBundle\Service\UserAttributeProvider;
 use PHPUnit\Framework\TestCase;
 
 class Test extends TestCase
 {
-    /**
-     * @var AuthorizationDataProvider
-     */
-    private $authorizationDataProvider;
+    private UserAttributeProvider $attributeProvider;
+    private AuthorizationService $auth;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->authorizationDataProvider = new AuthorizationDataProvider();
-        $this->authorizationDataProvider->setConfig(self::createAuthorizationConfig());
-        TestAuthorizationService::setUp($this->authorizationDataProvider, 'testuser', ['IS_USER' => false]);
+        $this->auth = new AuthorizationService();
+        TestAuthorizationService::setUp($this->auth, 'testuser', ['IS_USER' => false]);
+        $this->attributeProvider = new UserAttributeProvider($this->auth);
+        $this->attributeProvider->setConfig(self::createAuthorizationConfig());
     }
 
     public function testAvailableAttributes(): void
     {
         $this->assertEquals(['ROLE_USER', 'ROLE_ADMIN', 'VALUE', 'VALUE_2', 'VALUES', 'VALUES_2'],
-            $this->authorizationDataProvider->getAvailableAttributes());
+            $this->attributeProvider->getAvailableAttributes());
     }
 
     public function testRoles(): void
     {
-        $this->assertEquals(true, $this->authorizationDataProvider->getUserAttributes('user1')['ROLE_USER']);
-        $this->assertEquals(true, $this->authorizationDataProvider->getUserAttributes('user2')['ROLE_USER']);
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes('admin')['ROLE_USER']);
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes('user1')['ROLE_ADMIN']);
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes('user2')['ROLE_ADMIN']);
-        $this->assertEquals(true, $this->authorizationDataProvider->getUserAttributes('admin')['ROLE_ADMIN']);
+        $this->assertEquals(true, $this->attributeProvider->getUserAttributes('user1')['ROLE_USER']);
+        $this->assertEquals(true, $this->attributeProvider->getUserAttributes('user2')['ROLE_USER']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('admin')['ROLE_USER']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('user1')['ROLE_ADMIN']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('user2')['ROLE_ADMIN']);
+        $this->assertEquals(true, $this->attributeProvider->getUserAttributes('admin')['ROLE_ADMIN']);
 
         // not configured user: default values expected
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes('other')['ROLE_USER']);
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes('other')['ROLE_ADMIN']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('other')['ROLE_USER']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('other')['ROLE_ADMIN']);
 
         // null user (e.g. for system account users): default values expected
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes(null)['ROLE_USER']);
-        $this->assertEquals(false, $this->authorizationDataProvider->getUserAttributes(null)['ROLE_ADMIN']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes(null)['ROLE_USER']);
+        $this->assertEquals(false, $this->attributeProvider->getUserAttributes(null)['ROLE_ADMIN']);
     }
 
     public function testScalarValue(): void
     {
-        $this->assertEquals(1, $this->authorizationDataProvider->getUserAttributes('user1')['VALUE']);
-        $this->assertEquals(1, $this->authorizationDataProvider->getUserAttributes('user2')['VALUE']);
-        $this->assertEquals(2, $this->authorizationDataProvider->getUserAttributes('admin')['VALUE']);
-        $this->assertEquals(1, $this->authorizationDataProvider->getUserAttributes('user1')['VALUE_2']);
-        $this->assertEquals(1, $this->authorizationDataProvider->getUserAttributes('user2')['VALUE_2']);
-        $this->assertEquals(0, $this->authorizationDataProvider->getUserAttributes('admin')['VALUE_2']);
+        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user1')['VALUE']);
+        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user2')['VALUE']);
+        $this->assertEquals(2, $this->attributeProvider->getUserAttributes('admin')['VALUE']);
+        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user1')['VALUE_2']);
+        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user2')['VALUE_2']);
+        $this->assertEquals(0, $this->attributeProvider->getUserAttributes('admin')['VALUE_2']);
 
         // not configured user: default values expected
-        $this->assertEquals(null, $this->authorizationDataProvider->getUserAttributes('other')['VALUE']);
-        $this->assertEquals(0, $this->authorizationDataProvider->getUserAttributes('other')['VALUE_2']);
+        $this->assertEquals(null, $this->attributeProvider->getUserAttributes('other')['VALUE']);
+        $this->assertEquals(0, $this->attributeProvider->getUserAttributes('other')['VALUE_2']);
 
         // null user (e.g. for system account users): default values expected
-        $this->assertEquals(null, $this->authorizationDataProvider->getUserAttributes(null)['VALUE']);
-        $this->assertEquals(0, $this->authorizationDataProvider->getUserAttributes(null)['VALUE_2']);
+        $this->assertEquals(null, $this->attributeProvider->getUserAttributes(null)['VALUE']);
+        $this->assertEquals(0, $this->attributeProvider->getUserAttributes(null)['VALUE_2']);
     }
 
     public function testArrayValue(): void
     {
-        $this->assertEquals([1], $this->authorizationDataProvider->getUserAttributes('user1')['VALUES']);
-        $this->assertEquals([1], $this->authorizationDataProvider->getUserAttributes('user2')['VALUES']);
-        $this->assertEquals([2], $this->authorizationDataProvider->getUserAttributes('admin')['VALUES']);
-        $this->assertEquals([1], $this->authorizationDataProvider->getUserAttributes('user1')['VALUES_2']);
-        $this->assertEquals([1], $this->authorizationDataProvider->getUserAttributes('user2')['VALUES_2']);
-        $this->assertEquals([1, 2, 3], $this->authorizationDataProvider->getUserAttributes('admin')['VALUES_2']);
+        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user1')['VALUES']);
+        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user2')['VALUES']);
+        $this->assertEquals([2], $this->attributeProvider->getUserAttributes('admin')['VALUES']);
+        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user1')['VALUES_2']);
+        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user2')['VALUES_2']);
+        $this->assertEquals([1, 2, 3], $this->attributeProvider->getUserAttributes('admin')['VALUES_2']);
 
         // not configured user: default values expected
-        $this->assertEquals([], $this->authorizationDataProvider->getUserAttributes('other')['VALUES']);
-        $this->assertEquals([1, 2, 3], $this->authorizationDataProvider->getUserAttributes('other')['VALUES_2']);
+        $this->assertEquals([], $this->attributeProvider->getUserAttributes('other')['VALUES']);
+        $this->assertEquals([1, 2, 3], $this->attributeProvider->getUserAttributes('other')['VALUES_2']);
 
         // null user (e.g. for system account users): default values expected
-        $this->assertEquals([], $this->authorizationDataProvider->getUserAttributes(null)['VALUES']);
-        $this->assertEquals([1, 2, 3], $this->authorizationDataProvider->getUserAttributes(null)['VALUES_2']);
+        $this->assertEquals([], $this->attributeProvider->getUserAttributes(null)['VALUES']);
+        $this->assertEquals([1, 2, 3], $this->attributeProvider->getUserAttributes(null)['VALUES_2']);
     }
 
     public function testValueExpression(): void
     {
         // 'testuser' is not part of the group 'USERS'
-        $this->assertFalse($this->authorizationDataProvider->getUserAttributes('testuser')['ROLE_USER']);
+        $this->assertFalse($this->attributeProvider->getUserAttributes('testuser')['ROLE_USER']);
 
         // however, if we give them the required user attribute
-        TestAuthorizationService::setUp($this->authorizationDataProvider, 'testuser', ['IS_USER' => true]);
+        TestAuthorizationService::setUp($this->auth, 'testuser', ['IS_USER' => true]);
 
         // the value expression will evaluate to 'true'
-        $this->assertTrue($this->authorizationDataProvider->getUserAttributes('testuser')['ROLE_USER']);
+        $this->assertTrue($this->attributeProvider->getUserAttributes('testuser')['ROLE_USER']);
     }
 
     private static function createAuthorizationConfig(): array

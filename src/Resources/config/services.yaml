@@ -1,4 +1,8 @@
 services:
-  Dbp\Relay\CoreConnectorTextfileBundle\Service\AuthorizationDataProvider:
+  Dbp\Relay\CoreConnectorTextfileBundle\Service\UserAttributeProvider:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CoreConnectorTextfileBundle\Service\AuthorizationService:
     autowire: true
     autoconfigure: true
