@@ -26,62 +26,62 @@ class Test extends TestCase
 
     public function testAvailableAttributes(): void
     {
-        $this->assertEquals(['ROLE_USER', 'ROLE_ADMIN', 'VALUE', 'VALUE_2', 'VALUES', 'VALUES_2'],
+        $this->assertSame(['ROLE_USER', 'ROLE_ADMIN', 'VALUE', 'VALUE_2', 'VALUES', 'VALUES_2'],
             $this->attributeProvider->getAvailableAttributes());
     }
 
     public function testRoles(): void
     {
-        $this->assertEquals(true, $this->attributeProvider->getUserAttributes('user1')['ROLE_USER']);
-        $this->assertEquals(true, $this->attributeProvider->getUserAttributes('user2')['ROLE_USER']);
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('admin')['ROLE_USER']);
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('user1')['ROLE_ADMIN']);
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('user2')['ROLE_ADMIN']);
-        $this->assertEquals(true, $this->attributeProvider->getUserAttributes('admin')['ROLE_ADMIN']);
+        $this->assertSame(true, $this->attributeProvider->getUserAttributes('user1')['ROLE_USER']);
+        $this->assertSame(true, $this->attributeProvider->getUserAttributes('user2')['ROLE_USER']);
+        $this->assertSame(false, $this->attributeProvider->getUserAttributes('admin')['ROLE_USER']);
+        $this->assertSame(null, $this->attributeProvider->getUserAttributes('user1')['ROLE_ADMIN']);
+        $this->assertSame(null, $this->attributeProvider->getUserAttributes('user2')['ROLE_ADMIN']);
+        $this->assertSame(true, $this->attributeProvider->getUserAttributes('admin')['ROLE_ADMIN']);
 
         // not configured user: default values expected
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('other')['ROLE_USER']);
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes('other')['ROLE_ADMIN']);
+        $this->assertSame(false, $this->attributeProvider->getUserAttributes('other')['ROLE_USER']);
+        $this->assertSame(null, $this->attributeProvider->getUserAttributes('other')['ROLE_ADMIN']);
 
         // null user (e.g. for system account users): default values expected
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes(null)['ROLE_USER']);
-        $this->assertEquals(false, $this->attributeProvider->getUserAttributes(null)['ROLE_ADMIN']);
+        $this->assertSame(false, $this->attributeProvider->getUserAttributes(null)['ROLE_USER']);
+        $this->assertSame(null, $this->attributeProvider->getUserAttributes(null)['ROLE_ADMIN']);
     }
 
     public function testScalarValue(): void
     {
-        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user1')['VALUE']);
-        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user2')['VALUE']);
-        $this->assertEquals(2, $this->attributeProvider->getUserAttributes('admin')['VALUE']);
-        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user1')['VALUE_2']);
-        $this->assertEquals(1, $this->attributeProvider->getUserAttributes('user2')['VALUE_2']);
-        $this->assertEquals(0, $this->attributeProvider->getUserAttributes('admin')['VALUE_2']);
+        $this->assertSame(1, $this->attributeProvider->getUserAttributes('user1')['VALUE']);
+        $this->assertSame(1, $this->attributeProvider->getUserAttributes('user2')['VALUE']);
+        $this->assertSame(2, $this->attributeProvider->getUserAttributes('admin')['VALUE']);
+        $this->assertSame(1, $this->attributeProvider->getUserAttributes('user1')['VALUE_2']);
+        $this->assertSame(1, $this->attributeProvider->getUserAttributes('user2')['VALUE_2']);
+        $this->assertSame(0, $this->attributeProvider->getUserAttributes('admin')['VALUE_2']);
 
         // not configured user: default values expected
-        $this->assertEquals(null, $this->attributeProvider->getUserAttributes('other')['VALUE']);
-        $this->assertEquals(0, $this->attributeProvider->getUserAttributes('other')['VALUE_2']);
+        $this->assertSame(null, $this->attributeProvider->getUserAttributes('other')['VALUE']);
+        $this->assertSame(0, $this->attributeProvider->getUserAttributes('other')['VALUE_2']);
 
         // null user (e.g. for system account users): default values expected
-        $this->assertEquals(null, $this->attributeProvider->getUserAttributes(null)['VALUE']);
-        $this->assertEquals(0, $this->attributeProvider->getUserAttributes(null)['VALUE_2']);
+        $this->assertSame(null, $this->attributeProvider->getUserAttributes(null)['VALUE']);
+        $this->assertSame(0, $this->attributeProvider->getUserAttributes(null)['VALUE_2']);
     }
 
     public function testArrayValue(): void
     {
-        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user1')['VALUES']);
-        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user2')['VALUES']);
-        $this->assertEquals([2], $this->attributeProvider->getUserAttributes('admin')['VALUES']);
-        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user1')['VALUES_2']);
-        $this->assertEquals([1], $this->attributeProvider->getUserAttributes('user2')['VALUES_2']);
-        $this->assertEquals([1, 2, 3], $this->attributeProvider->getUserAttributes('admin')['VALUES_2']);
+        $this->assertSame([1], $this->attributeProvider->getUserAttributes('user1')['VALUES']);
+        $this->assertSame([1], $this->attributeProvider->getUserAttributes('user2')['VALUES']);
+        $this->assertSame([2], $this->attributeProvider->getUserAttributes('admin')['VALUES']);
+        $this->assertSame([1], $this->attributeProvider->getUserAttributes('user1')['VALUES_2']);
+        $this->assertSame([1], $this->attributeProvider->getUserAttributes('user2')['VALUES_2']);
+        $this->assertSame([1, 2, 3], $this->attributeProvider->getUserAttributes('admin')['VALUES_2']);
 
         // not configured user: default values expected
-        $this->assertEquals([], $this->attributeProvider->getUserAttributes('other')['VALUES']);
-        $this->assertEquals([1, 2, 3], $this->attributeProvider->getUserAttributes('other')['VALUES_2']);
+        $this->assertSame([], $this->attributeProvider->getUserAttributes('other')['VALUES']);
+        $this->assertSame([1, 2, 3], $this->attributeProvider->getUserAttributes('other')['VALUES_2']);
 
         // null user (e.g. for system account users): default values expected
-        $this->assertEquals([], $this->attributeProvider->getUserAttributes(null)['VALUES']);
-        $this->assertEquals([1, 2, 3], $this->attributeProvider->getUserAttributes(null)['VALUES_2']);
+        $this->assertSame([], $this->attributeProvider->getUserAttributes(null)['VALUES']);
+        $this->assertSame([1, 2, 3], $this->attributeProvider->getUserAttributes(null)['VALUES_2']);
     }
 
     public function testValueExpression(): void
