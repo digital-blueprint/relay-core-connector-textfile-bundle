@@ -12,16 +12,16 @@ use PHPUnit\Framework\TestCase;
 
 class Test extends TestCase
 {
-    private UserAttributeProvider $attributeProvider;
-    private AuthorizationService $auth;
+    private ?UserAttributeProvider $attributeProvider = null;
+    private ?AuthorizationService $authorizationService = null;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->auth = new AuthorizationService();
-        TestAuthorizationService::setUp($this->auth, 'testuser', ['IS_USER' => false]);
-        $this->attributeProvider = new UserAttributeProvider($this->auth);
+        $this->authorizationService = new AuthorizationService();
+        TestAuthorizationService::setUp($this->authorizationService, 'testuser', ['IS_USER' => false]);
+        $this->attributeProvider = new UserAttributeProvider($this->authorizationService);
         $this->attributeProvider->setConfig(self::createAuthorizationConfig());
     }
 
@@ -39,6 +39,7 @@ class Test extends TestCase
         $this->assertFalse($this->attributeProvider->hasUserAttribute('ROLE_SOMETHING'));
 
         $this->expectException(UserAttributeException::class);
+        $this->expectExceptionCode(UserAttributeException::USER_ATTRIBUTE_UNDEFINED);
         $this->attributeProvider->getUserAttribute('user1', 'ROLE_SOMETHING');
     }
 
@@ -110,7 +111,7 @@ class Test extends TestCase
         $this->assertAttributeSame(false, 'testuser', 'ROLE_USER');
 
         // however, if we give them the required user attribute
-        TestAuthorizationService::setUp($this->auth, 'testuser', ['IS_USER' => true]);
+        TestAuthorizationService::setUp($this->authorizationService, 'testuser', ['IS_USER' => true]);
 
         // the value expression will evaluate to 'true'
         $this->assertAttributeSame(true, 'testuser', 'ROLE_USER');

@@ -21,25 +21,21 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
      * Array of available user groups:
      * ['group1' => [self::GROUP_MEMBERS_ATTRIBUTE => ['user1'], self::GROUP_ATTRIBUTES_ATTRIBUTE => ['attr1' => 'value1'], 'group2' => ... ].
      *
-     * @var array
+     * @var array[]
      */
-    private $groups;
+    private array $groups = [];
 
     /**
      * Array of available attributes:
      * ['attr1' => [self::DEFAULT_VALUE_ATTRIBUTE => 'value0', self::IS_ARRAY_ATTRIBUTE => 'false'], 'attr2' => ... ].
      *
-     * @var array
+     * @var array[]
      */
-    private $attributes;
+    private array $attributes = [];
 
-    private AuthorizationService $auth;
-
-    public function __construct(AuthorizationService $auth)
+    public function __construct(
+        private readonly AuthorizationService $authorizationService)
     {
-        $this->groups = [];
-        $this->attributes = [];
-        $this->auth = $auth;
     }
 
     public function getAvailableAttributes(): array
@@ -76,7 +72,8 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
             if (!isset($userAttributeValues[$attributeName])) {
                 $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
                 if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
-                    $userAttributeValues[$attributeName] = $this->auth->getAttribute($attributeName, $defaultValue);
+                    $userAttributeValues[$attributeName] =
+                        $this->authorizationService->getAttribute($attributeName, $defaultValue);
                 } else {
                     $userAttributeValues[$attributeName] = $defaultValue;
                 }
@@ -100,7 +97,7 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
         $attributeData = $this->attributes[$name];
         $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
         if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
-            return $this->auth->getAttribute($name, $defaultValue);
+            return $this->authorizationService->getAttribute($name, $defaultValue);
         } else {
             return $defaultValue;
         }
@@ -111,7 +108,7 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
         return array_key_exists($name, $this->attributes);
     }
 
-    public function setConfig(array $config)
+    public function setConfig(array $config): void
     {
         $attributeValueExpressions = [];
 
@@ -199,6 +196,6 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
             ++$mappingIndex;
         }
 
-        $this->auth->configure([], $attributeValueExpressions);
+        $this->authorizationService->setUpAccessControlPolicies(attributes: $attributeValueExpressions);
     }
 }
