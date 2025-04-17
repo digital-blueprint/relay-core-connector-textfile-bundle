@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.13
+
+* Drop support for PHP 8.1
+* Drop support for Psalm
+* Remove dependency on api-platform
+
 ## v0.1.12
 
 * Port to UserAttributeProviderExInterface to only evaluate expression when needed
