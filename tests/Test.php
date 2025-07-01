@@ -25,30 +25,30 @@ class Test extends TestCase
         $this->attributeProvider->setConfig(self::createAuthorizationConfig());
     }
 
-    public function testAvailableAttributes(): void
+    public function testHasUserAttribute(): void
     {
-        $this->assertSame(['ROLE_USER', 'ROLE_ADMIN', 'VALUE', 'VALUE_2', 'VALUES', 'VALUES_2'],
-            $this->attributeProvider->getAvailableAttributes());
         foreach (['ROLE_USER', 'ROLE_ADMIN', 'VALUE', 'VALUE_2', 'VALUES', 'VALUES_2'] as $attribute) {
             $this->assertTrue($this->attributeProvider->hasUserAttribute($attribute));
         }
+
+        $this->assertFalse($this->attributeProvider->hasUserAttribute('ROLE_SOMETHING'));
     }
 
-    public function testNotAvailable(): void
+    public function testGetUserAttributeUndefined(): void
     {
-        $this->assertFalse($this->attributeProvider->hasUserAttribute('ROLE_SOMETHING'));
-
         $this->expectException(UserAttributeException::class);
         $this->expectExceptionCode(UserAttributeException::USER_ATTRIBUTE_UNDEFINED);
         $this->attributeProvider->getUserAttribute('user1', 'ROLE_SOMETHING');
     }
 
-    private function assertAttributeSame($expected, $userIdentifier, $attribute): void
+    private function assertAttributeSame(mixed $expected, ?string $userIdentifier, string $attributeName): void
     {
-        $this->assertTrue($this->attributeProvider->hasUserAttribute($attribute));
-        $this->assertContains($attribute, $this->attributeProvider->getAvailableAttributes());
-        $this->assertSame($expected, $this->attributeProvider->getUserAttributes($userIdentifier)[$attribute]);
-        $this->assertSame($expected, $this->attributeProvider->getUserAttribute($userIdentifier, $attribute));
+        $this->assertTrue($this->attributeProvider->hasUserAttribute($attributeName));
+        try {
+            $this->assertSame($expected, $this->attributeProvider->getUserAttribute($userIdentifier, $attributeName));
+        } catch (UserAttributeException $e) {
+            throw new \RuntimeException($e->getMessage());
+        }
     }
 
     public function testRoles(): void

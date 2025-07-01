@@ -6,10 +6,10 @@ namespace Dbp\Relay\CoreConnectorTextfileBundle\Service;
 
 use Dbp\Relay\CoreBundle\Helpers\Tools;
 use Dbp\Relay\CoreBundle\User\UserAttributeException;
-use Dbp\Relay\CoreBundle\User\UserAttributeProviderExInterface;
+use Dbp\Relay\CoreBundle\User\UserAttributeProviderInterface;
 use Dbp\Relay\CoreConnectorTextfileBundle\DependencyInjection\Configuration;
 
-class UserAttributeProvider implements UserAttributeProviderExInterface
+class UserAttributeProvider implements UserAttributeProviderInterface
 {
     private const GROUP_MEMBERS_ATTRIBUTE = 'members';
     private const GROUP_ATTRIBUTES_ATTRIBUTE = 'attributes';
@@ -36,76 +36,6 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
     public function __construct(
         private readonly AuthorizationService $authorizationService)
     {
-    }
-
-    public function getAvailableAttributes(): array
-    {
-        return array_keys($this->attributes);
-    }
-
-    private function getGroupAttributes(?string $userIdentifier): array
-    {
-        $userAttributeValues = [];
-
-        if (Tools::isNullOrEmpty($userIdentifier) === false) {
-            foreach ($this->groups as $group) {
-                if (in_array($userIdentifier, $group[self::GROUP_MEMBERS_ATTRIBUTE], true)) {
-                    foreach ($group[self::GROUP_ATTRIBUTES_ATTRIBUTE] as $attributeName => $attributeValue) {
-                        if (isset($userAttributeValues[$attributeName]) && $userAttributeValues[$attributeName] !== $attributeValue) {
-                            throw new \RuntimeException(sprintf('conflicting values for attribute \'%s\'', $attributeName));
-                        }
-                        $userAttributeValues[$attributeName] = $attributeValue;
-                    }
-                }
-            }
-        }
-
-        return $userAttributeValues;
-    }
-
-    public function getUserAttributes(?string $userIdentifier): array
-    {
-        $userAttributeValues = $this->getGroupAttributes($userIdentifier);
-
-        // set default values / value expression results for attributes without values
-        foreach ($this->attributes as $attributeName => $attributeData) {
-            if (!isset($userAttributeValues[$attributeName])) {
-                $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
-                if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
-                    $userAttributeValues[$attributeName] =
-                        $this->authorizationService->getAttribute($attributeName, $defaultValue);
-                } else {
-                    $userAttributeValues[$attributeName] = $defaultValue;
-                }
-            }
-        }
-
-        return $userAttributeValues;
-    }
-
-    public function getUserAttribute(?string $userIdentifier, string $name): mixed
-    {
-        if (!array_key_exists($name, $this->attributes)) {
-            throw new UserAttributeException('unknown '.$name, UserAttributeException::USER_ATTRIBUTE_UNDEFINED);
-        }
-
-        $userAttributeValues = $this->getGroupAttributes($userIdentifier);
-        if (isset($userAttributeValues[$name])) {
-            return $userAttributeValues[$name];
-        }
-
-        $attributeData = $this->attributes[$name];
-        $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
-        if ($attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null) {
-            return $this->authorizationService->getAttribute($name, $defaultValue);
-        } else {
-            return $defaultValue;
-        }
-    }
-
-    public function hasUserAttribute(string $name): bool
-    {
-        return array_key_exists($name, $this->attributes);
     }
 
     public function setConfig(array $config): void
@@ -197,5 +127,55 @@ class UserAttributeProvider implements UserAttributeProviderExInterface
         }
 
         $this->authorizationService->setUpAccessControlPolicies(attributes: $attributeValueExpressions);
+    }
+
+    public function hasUserAttribute(string $name): bool
+    {
+        return $this->hasAttributeInternal($name);
+    }
+
+    public function getUserAttribute(?string $userIdentifier, string $name): mixed
+    {
+        if (false === $this->hasAttributeInternal($name)) {
+            throw new UserAttributeException("user attribute '$name' is undefined",
+                UserAttributeException::USER_ATTRIBUTE_UNDEFINED);
+        }
+
+        $userAttributeValues = $this->getGroupAttributes($userIdentifier);
+        if (array_key_exists($name, $userAttributeValues)) {
+            return $userAttributeValues[$name];
+        }
+
+        $attributeData = $this->attributes[$name];
+        $defaultValue = $attributeData[self::DEFAULT_VALUE_ATTRIBUTE];
+
+        return $attributeData[self::VALUE_EXPRESSION_ATTRIBUTE] ?? null ?
+            $this->authorizationService->getAttribute($name, $defaultValue) :
+            $defaultValue;
+    }
+
+    private function getGroupAttributes(?string $userIdentifier): array
+    {
+        $userAttributeValues = [];
+
+        if (Tools::isNullOrEmpty($userIdentifier) === false) {
+            foreach ($this->groups as $group) {
+                if (in_array($userIdentifier, $group[self::GROUP_MEMBERS_ATTRIBUTE], true)) {
+                    foreach ($group[self::GROUP_ATTRIBUTES_ATTRIBUTE] as $attributeName => $attributeValue) {
+                        if (isset($userAttributeValues[$attributeName]) && $userAttributeValues[$attributeName] !== $attributeValue) {
+                            throw new \RuntimeException(sprintf('conflicting values for attribute \'%s\'', $attributeName));
+                        }
+                        $userAttributeValues[$attributeName] = $attributeValue;
+                    }
+                }
+            }
+        }
+
+        return $userAttributeValues;
+    }
+
+    private function hasAttributeInternal(string $name): bool
+    {
+        return array_key_exists($name, $this->attributes);
     }
 }

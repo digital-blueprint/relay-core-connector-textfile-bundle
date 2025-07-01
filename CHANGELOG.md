@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Update core and adapt UserAttributeProvider
+
 ## v0.1.13
 
 * Drop support for PHP 8.1
