@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.1.14
+
 * Update core and adapt UserAttributeProvider
 
 ## v0.1.13
