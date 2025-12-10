@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v0.1.15
+
+* Add support for Symfony 7
+* Drop support for Symfony 5
+
 ## v0.1.14
 
 * Update core and adapt UserAttributeProvider
