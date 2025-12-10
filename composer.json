@@ -7,10 +7,10 @@
         "php": ">=8.2",
         "ext-json": "*",
         "dbp/relay-core-bundle": "^0.1.215",
-        "symfony/framework-bundle": " ^6.4",
-        "symfony/dependency-injection": " ^6.4",
-        "symfony/http-kernel": " ^6.4",
-        "symfony/config": " ^6.4"
+        "symfony/framework-bundle": "^6.4 || ^7.4",
+        "symfony/dependency-injection": "^6.4 || ^7.4",
+        "symfony/http-kernel": "^6.4 || ^7.4",
+        "symfony/config": "^6.4 || ^7.4"
     },
     "require-dev": {
         "captainhook/captainhook": "^5.25",
@@ -19,10 +19,11 @@
         "phpstan/phpstan-phpunit": "^2.0.0",
         "phpstan/phpstan-symfony": "^2.0.0",
         "phpunit/phpunit": "^11.0",
-        "symfony/browser-kit": " ^6.4",
-        "symfony/http-client": " ^6.4",
-        "symfony/monolog-bundle": "^3.10",
-        "symfony/phpunit-bridge": " ^6.4"
+        "symfony/browser-kit": "^6.4 || ^7.4",
+        "symfony/http-client": "^6.4 || ^7.4",
+        "symfony/monolog-bundle": "^3.10 || ^4.0",
+        "symfony/phpunit-bridge": "^6.4 || ^7.4",
+        "symfony/runtime": "^6.4 || ^7.4"
     },
     "autoload": {
         "psr-4": {
@@ -40,7 +41,8 @@
             "php": "8.2"
         },
         "allow-plugins": {
-            "composer/package-versions-deprecated": false
+            "composer/package-versions-deprecated": false,
+            "symfony/runtime": true
         }
     },
     "scripts": {
